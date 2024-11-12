@@ -10,7 +10,6 @@ export const FetchMessage = (conversationId) => {
 
     const messagesRef = collection(db, "conversations", conversationId, "messages");
     const q = query(messagesRef, orderBy("timestamp", "asc"));
-
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const fetchedMessages = snapshot.docs.map(doc => ({
         id: doc.id,
