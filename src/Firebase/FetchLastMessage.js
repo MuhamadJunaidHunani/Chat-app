@@ -9,7 +9,6 @@ export const FetchLastMessage = (conversationId, callback) => {
       const lastMessage = docSnap.data();
       callback(lastMessage); 
     } else {
-      console.log("No such conversation document!");
       callback(null);
     }
   }, (error) => {

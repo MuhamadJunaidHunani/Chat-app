@@ -1,15 +1,13 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import placeholderMan from '../assets/placeholder-man.jpg';
 import MessageInput from './MessageInput';
-import { useUsers } from '../context/UsersContext';
 import { AddMessage } from '../Firebase/AddMessage';
 import { useAuth } from '../context/AuthContext';
 import { FetchMessage } from '../Firebase/FetchMessage';
 import { FormatTimestamp } from '../Firebase/FormatTimeStamp';
 import style from './style.module.css'
-import { MdDelete } from "react-icons/md";
 import { DeleteMessage } from '../Firebase/deleteMessage';
-
+import { IoIosArrowDown } from "react-icons/io";
 
 const ChatUI = ({ user }) => {
   if (!user) {
@@ -19,28 +17,26 @@ const ChatUI = ({ user }) => {
       </div>
     );
   }
-
   const { currentUser } = useAuth();
+  const [openedMenu, setOpemedMenu] = useState(null);
+  const inboxContainerRef = useRef(null);
+
   const generateConversationId = (userId1, userId2) => {
     const sortedUserIds = [userId1, userId2].sort();
     return sortedUserIds.join('_');
   };
   const conversationId = generateConversationId(currentUser.uid, user?.id);
   const messages = FetchMessage(conversationId);
-  console.log(messages, "{{{{{{}}}}}}}}}}}}}}");
-
   const addMessage = async (newMessage) => {
-    const conversationId = generateConversationId(currentUser.uid, user.id);
     await AddMessage(conversationId, { message: newMessage, senderId: currentUser.uid });
   };
-
-  const inboxContainerRef = useRef(null);
 
   const scrollToBottom = () => {
     if (inboxContainerRef.current) {
       inboxContainerRef.current.scrollTop = inboxContainerRef.current.scrollHeight;
     }
   };
+
 
   useEffect(() => {
     scrollToBottom();
@@ -66,15 +62,31 @@ const ChatUI = ({ user }) => {
           <div key={index} className={`flex ${message.senderId === currentUser.uid ? "justify-end" : ""}`}>
             <div className="flex flex-col items-end space-y-1">
               <div
-                className={`py-1 px-[15px] rounded-lg  text-[18px] flex gap-2 items-center ${message.senderId === currentUser.uid ? "bg-[#292F3F] rounded-tr-[0px]" : "bg-gray-700 rounded-tl-[0px]"
+                className={`relative max-w-[250px] py-3 px-[15px] rounded-lg   flex gap-2 ${message.senderId === currentUser.uid ? "bg-[#292F3F] rounded-tr-[0px]" : "bg-gray-700 rounded-tl-[0px]"
                   }`}
               >
-                {message.message}
-                {message.senderId === currentUser.uid &&
-                  <span onClick={() => DeleteMessage(conversationId, message.id)}>
-                    <MdDelete />
-                  </span>
-                }
+                <p className='break-words w-[100%] text-[16px]'>
+                  {message.message}
+                </p>
+                <div >
+                  <IoIosArrowDown onClick={() => setOpemedMenu((prev) => prev === index ? null : index)} className='absolute right-1 top-1 hover:opacity-[0.7] cursor-pointer' />
+                  {openedMenu === index && (
+                    <div className={`absolute mt-2 w-32 z-[100] rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 ${message.senderId === currentUser.uid ? "right-0" : 'left-0'}`}>
+                      <div className="py-1" role="menu" aria-orientation="vertical" aria-labelledby="options-menu">
+                        <button className="block w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Delete for me</button>
+                        {message.senderId === currentUser.uid && (
+                          <>
+                            <button className="block w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Edit</button>
+                            <button onClick={() => {
+                              DeleteMessage(conversationId, message.id)
+                              setOpemedMenu(null)
+                            }} className="block w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Delete</button>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
               <span className="text-xs text-gray-500">
                 {FormatTimestamp(message?.timestamp)}
